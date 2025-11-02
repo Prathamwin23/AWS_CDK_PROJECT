@@ -2,19 +2,20 @@ import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 
-export interface ClassicRdsStackProps extends cdk.StackProps {
+export interface RdsStackProps extends cdk.StackProps {
   vpc: ec2.Vpc;
   environment: string;
 }
 
-export class ClassicRdsStack extends cdk.Stack {
+export class RdsStack extends cdk.Stack {
   public readonly dbInstance: rds.DatabaseInstance;
   public readonly dbSecurityGroup: ec2.SecurityGroup;
   public readonly dbSecret: secretsmanager.Secret;
 
-  constructor(scope: Construct, id: string, props?: ClassicRdsStackProps) {
+  constructor(scope: Construct, id: string, props?: RdsStackProps) {
     super(scope, id, props);
 
     const { vpc, environment } = props!;
@@ -103,9 +104,9 @@ export class ClassicRdsStack extends cdk.Stack {
     });
 
     // Create custom log group for enhanced monitoring
-    const logGroup = new cdk.aws_logs.LogGroup(this, 'DBLogGroup', {
+    const logGroup = new logs.LogGroup(this, 'DBLogGroup', {
       logGroupName: `/aws/rds/instance/${environment}-classic-app-db/postgresql`,
-      retention: cdk.aws_logs.RetentionDays.ONE_WEEK,
+      retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 

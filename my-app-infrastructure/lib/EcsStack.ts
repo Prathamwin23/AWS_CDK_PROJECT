@@ -8,7 +8,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { Construct } from 'constructs';
 
-export interface ClassicEcsStackProps extends cdk.StackProps {
+export interface EcsStackProps extends cdk.StackProps {
   vpc: ec2.Vpc;
   environment: string;
   dbSecret: secretsmanager.Secret;
@@ -16,13 +16,13 @@ export interface ClassicEcsStackProps extends cdk.StackProps {
   dbSecurityGroup: ec2.SecurityGroup;
 }
 
-export class ClassicEcsStack extends cdk.Stack {
+export class EcsStack extends cdk.Stack {
   public readonly cluster: ecs.Cluster;
   public readonly fargateService: ecs.FargateService;
   public readonly alb: elbv2.ApplicationLoadBalancer;
   public readonly ecrRepository: ecr.Repository;
 
-  constructor(scope: Construct, id: string, props?: ClassicEcsStackProps) {
+  constructor(scope: Construct, id: string, props?: EcsStackProps) {
     super(scope, id, props);
 
     const { vpc, environment, dbSecret, dbEndpoint, dbSecurityGroup } = props!;
@@ -224,3 +224,5 @@ export class ClassicEcsStack extends cdk.Stack {
       description: 'ECS Service Name',
       exportName: `${environment}-classic-service-name`,
     });
+  }
+}
