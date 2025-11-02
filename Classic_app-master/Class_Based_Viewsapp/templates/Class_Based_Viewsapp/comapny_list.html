@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>List of all companies</h1>
+{% for comp in object_list %}
+    <h5>{{ forloop.counter }}. <a href="{% url 'detail' comp.pk %}">{{ comp.Name }}</a></h5>
+{% empty %}
+    <p>No companies added yet.</p>
+{% endfor %}
+{% endblock %}
+    

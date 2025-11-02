@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container">
+    <div class="jumbotron">
+        <h1>Do you want to delete {{ compnay.Name }} ..?</h1>
+        <form action="" method="POST">
+            {% csrf_token %}
+            
+            <input type="submit" class="btn btn-danger" value="Yes">
+            <a href="{% url 'list' %}" class="btn btn-info">Cancel</a>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
