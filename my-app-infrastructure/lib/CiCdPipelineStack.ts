@@ -135,7 +135,7 @@ export class CiCdPipelineStack extends cdk.Stack {
     this.pipeline.addStage({
       stageName: 'Source',
       actions: [
-        // Option 1: Using GitHub OAuth Token (Legacy but simpler)
+        // GitHub OAuth Token with proper webhook configuration
         new codepipeline_actions.GitHubSourceAction({
           actionName: 'GitHub_Source',
           owner: githubOwner,
@@ -143,7 +143,7 @@ export class CiCdPipelineStack extends cdk.Stack {
           branch: githubBranch,
           oauthToken: cdk.SecretValue.secretsManager('github-token'),
           output: sourceOutput,
-          trigger: codepipeline_actions.GitHubTrigger.WEBHOOK,
+          trigger: codepipeline_actions.GitHubTrigger.WEBHOOK, // This creates a webhook for automatic triggering
         }),
         
         // Option 2: Using CodeStar Connections (Modern approach - uncomment to use)
@@ -184,7 +184,7 @@ export class CiCdPipelineStack extends cdk.Stack {
           actionName: 'ECS_Deploy',
           service: ecsServiceRef,
           input: buildOutput,
-          deploymentTimeout: cdk.Duration.minutes(20),
+          deploymentTimeout: cdk.Duration.minutes(30), // Increased from 20 to 30 minutes
         }),
       ],
     });
