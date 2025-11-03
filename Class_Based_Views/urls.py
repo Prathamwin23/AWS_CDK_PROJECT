@@ -16,17 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.http import JsonResponse
 from Class_Based_Viewsapp import views
-
-def health_check(request):
-    return JsonResponse({'status': 'healthy'})
 
 urlpatterns = [
     path('', views.Allcompanies.as_view(), name='home'),
     path('company/', include('Class_Based_Viewsapp.urls')),
     path('admin/', admin.site.urls),
-    path('health/', health_check, name='health'),
 ]
 
 
