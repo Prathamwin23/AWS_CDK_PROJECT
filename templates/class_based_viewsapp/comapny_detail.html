@@ -13,9 +13,9 @@
                         <strong>Origin:</strong> {{ object.origin }}<br>
                         <strong>Established Year:</strong> {{ object.est_year }}
                     </p>
-                    <a href="{% url 'list' %}" class="btn btn-secondary">Back to List</a>
-                    <a href="{% url 'update' object.pk %}" class="btn btn-warning">Edit</a>
-                    <a href="{% url 'delete' object.pk %}" class="btn btn-danger">Delete</a>
+                    <a href="{% url 'company:list' %}" class="btn btn-secondary">Back to List</a>
+                    <a href="{% url 'company:update' object.pk %}" class="btn btn-warning">Edit</a>
+                    <a href="{% url 'company:delete' object.pk %}" class="btn btn-danger">Delete</a>
                 </div>
             </div>
         </div>

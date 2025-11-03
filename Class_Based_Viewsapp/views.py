@@ -30,5 +30,5 @@ class CompanyUpdate(UpdateView):
 
 class CompanyDelete(DeleteView):
     model=Comapny
-    success_url=reverse_lazy("list")
+    success_url=reverse_lazy("company:list")
 

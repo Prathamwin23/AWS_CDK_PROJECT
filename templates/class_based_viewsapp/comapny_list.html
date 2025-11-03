@@ -5,7 +5,7 @@
     <div class="row">
         <div class="col-md-12">
             <h1>All Companies</h1>
-            <a href="{% url 'add' %}" class="btn btn-primary mb-3">Add New Company</a>
+            <a href="{% url 'company:add' %}" class="btn btn-primary mb-3">Add New Company</a>
             
             {% if object_list %}
                 <div class="row">
@@ -19,9 +19,9 @@
                                     <strong>Origin:</strong> {{ company.origin }}<br>
                                     <strong>Established:</strong> {{ company.est_year }}
                                 </p>
-                                <a href="{% url 'detail' company.pk %}" class="btn btn-info btn-sm">View Details</a>
-                                <a href="{% url 'update' company.pk %}" class="btn btn-warning btn-sm">Edit</a>
-                                <a href="{% url 'delete' company.pk %}" class="btn btn-danger btn-sm">Delete</a>
+                                <a href="{% url 'company:detail' company.pk %}" class="btn btn-info btn-sm">View Details</a>
+                                <a href="{% url 'company:update' company.pk %}" class="btn btn-warning btn-sm">Edit</a>
+                                <a href="{% url 'company:delete' company.pk %}" class="btn btn-danger btn-sm">Delete</a>
                             </div>
                         </div>
                     </div>
@@ -30,7 +30,7 @@
             {% else %}
                 <div class="alert alert-info">
                     <h4>No Companies Found</h4>
-                    <p>No companies have been added yet. <a href="{% url 'add' %}">Add the first company</a>.</p>
+                    <p>No companies have been added yet. <a href="{% url 'company:add' %}">Add the first company</a>.</p>
                 </div>
             {% endif %}
         </div>
