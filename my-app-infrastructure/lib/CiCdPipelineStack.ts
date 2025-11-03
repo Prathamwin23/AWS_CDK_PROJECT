@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import * as codecommit from 'aws-cdk-lib/aws-codecommit';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
@@ -17,7 +17,7 @@ export interface CiCdPipelineStackProps extends cdk.StackProps {
 
 export class CiCdPipelineStack extends cdk.Stack {
   public readonly pipeline: codepipeline.Pipeline;
-  public readonly codeRepository: codecommit.Repository;
+  public readonly sourceBucket: s3.Bucket;
 
   constructor(scope: Construct, id: string, props: CiCdPipelineStackProps) {
     super(scope, id, props);
@@ -25,11 +25,13 @@ export class CiCdPipelineStack extends cdk.Stack {
     const { environment, ecrRepository, ecsCluster, ecsService } = props;
 
     // ========================================================================
-    // STEP 1: Create CodeCommit Repository
+    // STEP 1: Create S3 Bucket for Source Code
     // ========================================================================
-    this.codeRepository = new codecommit.Repository(this, 'AppRepository', {
-      repositoryName: `${environment}-my-app-repo`,
-      description: 'Application source code repository',
+    this.sourceBucket = new s3.Bucket(this, 'SourceBucket', {
+      bucketName: `${environment}-my-app-source-${this.account}`,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      versioned: true,
     });
 
     // ========================================================================
@@ -72,7 +74,7 @@ export class CiCdPipelineStack extends cdk.Stack {
             commands: [
               'echo Build started on `date`',
               'echo Building the Docker image...',
-              'docker build -t $ECR_REPOSITORY_URI:latest .',
+              'docker build --no-cache -t $ECR_REPOSITORY_URI:latest .',
               'docker tag $ECR_REPOSITORY_URI:latest $ECR_REPOSITORY_URI:$IMAGE_TAG',
             ],
           },
@@ -83,7 +85,7 @@ export class CiCdPipelineStack extends cdk.Stack {
               'docker push $ECR_REPOSITORY_URI:latest',
               'docker push $ECR_REPOSITORY_URI:$IMAGE_TAG',
               'echo Writing image definitions file...',
-              'printf \'[{"name":"my-app","imageUri":"%s"}]\' $ECR_REPOSITORY_URI:latest > imagedefinitions.json',
+              'printf \'[{"name":"django-app","imageUri":"%s"}]\' $ECR_REPOSITORY_URI:latest > imagedefinitions.json',
               'cat imagedefinitions.json',
             ],
           },
@@ -112,17 +114,17 @@ export class CiCdPipelineStack extends cdk.Stack {
     });
 
     // ========================================================================
-    // STAGE 1: Source Stage (CodeCommit)
+    // STAGE 1: Source Stage (S3)
     // ========================================================================
     this.pipeline.addStage({
       stageName: 'Source',
       actions: [
-        new codepipeline_actions.CodeCommitSourceAction({
-          actionName: 'CodeCommit_Source',
-          repository: this.codeRepository,
-          branch: 'main',
+        new codepipeline_actions.S3SourceAction({
+          actionName: 'S3_Source',
+          bucket: this.sourceBucket,
+          bucketKey: 'source.zip',
           output: sourceOutput,
-          trigger: codepipeline_actions.CodeCommitTrigger.EVENTS, // Trigger on push
+          trigger: codepipeline_actions.S3Trigger.EVENTS,
         }),
       ],
     });
@@ -160,16 +162,10 @@ export class CiCdPipelineStack extends cdk.Stack {
     // ========================================================================
     // Outputs
     // ========================================================================
-    new cdk.CfnOutput(this, 'CodeCommitRepositoryUrl', {
-      value: this.codeRepository.repositoryCloneUrlHttp,
-      description: 'CodeCommit Repository Clone URL (HTTPS)',
-      exportName: `${environment}-codecommit-clone-url`,
-    });
-
-    new cdk.CfnOutput(this, 'CodeCommitRepositoryName', {
-      value: this.codeRepository.repositoryName,
-      description: 'CodeCommit Repository Name',
-      exportName: `${environment}-codecommit-repo-name`,
+    new cdk.CfnOutput(this, 'SourceBucketName', {
+      value: this.sourceBucket.bucketName,
+      description: 'S3 Bucket for Source Code',
+      exportName: `${environment}-source-bucket-name`,
     });
 
     new cdk.CfnOutput(this, 'PipelineName', {
@@ -181,6 +177,11 @@ export class CiCdPipelineStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'PipelineConsoleUrl', {
       value: `https://${this.region}.console.aws.amazon.com/codesuite/codepipeline/pipelines/${this.pipeline.pipelineName}/view`,
       description: 'CodePipeline Console URL',
+    });
+
+    new cdk.CfnOutput(this, 'DeploymentInstructions', {
+      value: `To deploy: zip your code and upload as 'source.zip' to bucket '${this.sourceBucket.bucketName}'`,
+      description: 'How to trigger deployments',
     });
   }
 }

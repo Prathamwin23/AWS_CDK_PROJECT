@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>All Companies</h1>
+            <a href="{% url 'add' %}" class="btn btn-primary mb-3">Add New Company</a>
+            
+            {% if object_list %}
+                <div class="row">
+                    {% for company in object_list %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ company.Name }}</h5>
+                                <p class="card-text">
+                                    <strong>CEO:</strong> {{ company.ceo }}<br>
+                                    <strong>Origin:</strong> {{ company.origin }}<br>
+                                    <strong>Established:</strong> {{ company.est_year }}
+                                </p>
+                                <a href="{% url 'detail' company.pk %}" class="btn btn-info btn-sm">View Details</a>
+                                <a href="{% url 'update' company.pk %}" class="btn btn-warning btn-sm">Edit</a>
+                                <a href="{% url 'delete' company.pk %}" class="btn btn-danger btn-sm">Delete</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <h4>No Companies Found</h4>
+                    <p>No companies have been added yet. <a href="{% url 'add' %}">Add the first company</a>.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

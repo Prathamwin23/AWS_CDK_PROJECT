@@ -40,15 +40,15 @@ export class RdsStack extends cdk.Stack {
     this.dbSecurityGroup = new ec2.SecurityGroup(this, 'DBSecurityGroup', {
       vpc,
       securityGroupName: `${environment}-classic-db-sg`,
-      description: 'Security group for Classic App RDS PostgreSQL',
+      description: 'Security group for Classic App RDS MySQL',
       allowAllOutbound: false,
     });
 
-    // Allow PostgreSQL traffic from within VPC
+    // Allow MySQL traffic from within VPC
     this.dbSecurityGroup.addIngressRule(
       ec2.Peer.ipv4(vpc.vpcCidrBlock),
-      ec2.Port.tcp(5432),
-      'Allow PostgreSQL access from VPC'
+      ec2.Port.tcp(3306),
+      'Allow MySQL access from VPC'
     );
 
     // Create RDS Subnet Group
@@ -62,11 +62,11 @@ export class RdsStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // Create RDS PostgreSQL instance
-    this.dbInstance = new rds.DatabaseInstance(this, 'PostgreSQLInstance', {
+    // Create RDS MySQL instance
+    this.dbInstance = new rds.DatabaseInstance(this, 'MySQLInstance', {
       instanceIdentifier: `${environment}-classic-app-db`,
-      engine: rds.DatabaseInstanceEngine.postgres({
-        version: rds.PostgresEngineVersion.VER_15_4, // Latest stable version
+      engine: rds.DatabaseInstanceEngine.mysql({
+        version: rds.MysqlEngineVersion.VER_8_0_39, // MySQL 8.0 for Django compatibility
       }),
       instanceType: ec2.InstanceType.of(
         ec2.InstanceClass.T3,
@@ -81,8 +81,7 @@ export class RdsStack extends cdk.Stack {
       credentials: rds.Credentials.fromSecret(this.dbSecret),
       databaseName: 'classicappdb',
       allocatedStorage: 20, // 20 GB minimum
-      maxAllocatedStorage: 100, // Auto-scaling up to 100 GB
-      storageType: rds.StorageType.GP3, // General Purpose SSD v3
+      storageType: rds.StorageType.GP2, // Use GP2 for better compatibility
       storageEncrypted: true,
       multiAz: false, // Set to true for production
       publiclyAccessible: false,
@@ -92,20 +91,14 @@ export class RdsStack extends cdk.Stack {
       preferredMaintenanceWindow: 'sun:04:00-sun:05:00',
       deletionProtection: false, // Set to true for production
       removalPolicy: cdk.RemovalPolicy.SNAPSHOT, // Create snapshot on delete
-      cloudwatchLogsExports: ['postgresql'], // Enable PostgreSQL logs
-      enablePerformanceInsights: true,
-      performanceInsightRetention: rds.PerformanceInsightRetention.DEFAULT,
-      monitoringInterval: cdk.Duration.seconds(60),
-      parameters: {
-        'shared_preload_libraries': 'pg_stat_statements',
-        'log_statement': 'all',
-        'log_min_duration_statement': '1000', // Log queries > 1 second
-      },
+      cloudwatchLogsExports: ['error'], // Only enable error logs for simplicity
+      enablePerformanceInsights: false, // Not supported on t3.micro
+      // Remove monitoring interval to avoid issues
     });
 
     // Create custom log group for enhanced monitoring
     const logGroup = new logs.LogGroup(this, 'DBLogGroup', {
-      logGroupName: `/aws/rds/instance/${environment}-classic-app-db/postgresql`,
+      logGroupName: `/aws/rds/instance/${environment}-classic-app-db/error`,
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });

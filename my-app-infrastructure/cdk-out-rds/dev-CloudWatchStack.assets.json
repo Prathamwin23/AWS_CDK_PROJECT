@@ -1,0 +1,21 @@
+{
+  "version": "48.0.0",
+  "files": {
+    "26507c0df7800223f476b194ba0ce4c7f3b82f20ab445591601e5a314c826339": {
+      "displayName": "dev-CloudWatchStack Template",
+      "source": {
+        "path": "dev-CloudWatchStack.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "516268691462-ap-south-1-d701a728": {
+          "bucketName": "cdk-hnb659fds-assets-516268691462-ap-south-1",
+          "objectKey": "26507c0df7800223f476b194ba0ce4c7f3b82f20ab445591601e5a314c826339.json",
+          "region": "ap-south-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::516268691462:role/cdk-hnb659fds-file-publishing-role-516268691462-ap-south-1"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}

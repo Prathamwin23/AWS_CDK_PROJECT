@@ -8,15 +8,29 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { Construct } from 'constructs';
 
+/**
+ * Props interface for ECS Stack
+ * This defines what inputs our stack needs from other stacks
+ */
 export interface EcsStackProps extends cdk.StackProps {
-  vpc: ec2.Vpc;
-  environment: string;
-  dbSecret: secretsmanager.Secret;
-  dbEndpoint: string;
-  dbSecurityGroup: ec2.SecurityGroup;
+  vpc: ec2.Vpc;                           // VPC from VpcStack
+  environment: string;                    // Environment name (dev/prod)
+  dbSecret: secretsmanager.Secret;        // Database password from RdsStack
+  dbEndpoint: string;                     // Database endpoint from RdsStack
 }
 
+/**
+ * ECS Stack - Deploys containerized Django application
+ * 
+ * This stack creates:
+ * 1. ECR Repository (to store Docker images)
+ * 2. ECS Cluster (compute environment)
+ * 3. Task Definition (container configuration)
+ * 4. Application Load Balancer (distributes traffic)
+ * 5. ECS Service (runs and maintains containers)
+ */
 export class EcsStack extends cdk.Stack {
+  // Public properties that other stacks can access
   public readonly cluster: ecs.Cluster;
   public readonly fargateService: ecs.FargateService;
   public readonly alb: elbv2.ApplicationLoadBalancer;
@@ -25,81 +39,106 @@ export class EcsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: EcsStackProps) {
     super(scope, id, props);
 
-    const { vpc, environment, dbSecret, dbEndpoint, dbSecurityGroup } = props!;
+    const { vpc, environment, dbSecret, dbEndpoint } = props!;
 
-    // Create ECR Repository
-    this.ecrRepository = new ecr.Repository(this, 'AppRepository', {
-      repositoryName: `${environment}/classic-app`,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteImages: true,
-      imageScanOnPush: true,
+    // ========================================
+    // 1. ECR REPOSITORY
+    // ========================================
+    // Container registry to store our Django app Docker images
+    this.ecrRepository = new ecr.Repository(this, 'DjangoAppRepository', {
+      repositoryName: `${environment}/django-app`,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,  // Delete when stack is destroyed
+      emptyOnDelete: true,                        // Clean up images automatically
+      imageScanOnPush: true,                     // Scan for vulnerabilities
     });
 
-    // Create ECS Cluster
-    this.cluster = new ecs.Cluster(this, 'AppCluster', {
-      clusterName: `${environment}-classic-app-cluster`,
-      vpc,
-      containerInsights: true,
+    // ========================================
+    // 2. ECS CLUSTER
+    // ========================================
+    // Logical grouping of compute resources
+    this.cluster = new ecs.Cluster(this, 'DjangoCluster', {
+      clusterName: `${environment}-django-cluster`,
+      vpc: vpc,
+      containerInsights: true,  // Enable CloudWatch Container Insights for monitoring
     });
 
-    // CloudWatch Log Group for Python app
-    const logGroup = new logs.LogGroup(this, 'AppLogGroup', {
-      logGroupName: `/ecs/${environment}/classic-app`,
+    // ========================================
+    // 3. LOGGING
+    // ========================================
+    // CloudWatch log group for application logs
+    const logGroup = new logs.LogGroup(this, 'DjangoLogGroup', {
+      logGroupName: `/ecs/${environment}/django-app`,
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // Task Execution Role
+    // ========================================
+    // 4. IAM ROLES
+    // ========================================
+    // Task Execution Role - allows ECS to pull images and write logs
     const executionRole = new iam.Role(this, 'TaskExecutionRole', {
       assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonECSTaskExecutionRolePolicy'),
       ],
     });
-
+    // Grant permission to read database password from Secrets Manager
     dbSecret.grantRead(executionRole);
 
-    // Task Role (minimal permissions)
+    // Task Role - permissions for the running container (minimal for security)
     const taskRole = new iam.Role(this, 'TaskRole', {
       assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
     });
 
-    // Task Definition for Python Flask
-    const taskDefinition = new ecs.FargateTaskDefinition(this, 'TaskDef', {
-      family: `${environment}-classic-app`,
-      memoryLimitMiB: 512,
-      cpu: 256,
-      executionRole,
-      taskRole,
+    // ========================================
+    // 5. TASK DEFINITION
+    // ========================================
+    // Blueprint for how containers should run
+    const taskDefinition = new ecs.FargateTaskDefinition(this, 'DjangoTaskDef', {
+      family: `${environment}-django-app`,
+      memoryLimitMiB: 512,    // 0.5 GB RAM
+      cpu: 256,               // 0.25 vCPU
+      executionRole: executionRole,
+      taskRole: taskRole,
     });
 
-    // Add Python app container
-    const container = taskDefinition.addContainer('classic-app', {
-      containerName: 'classic-app',
+    // ========================================
+    // 6. CONTAINER DEFINITION
+    // ========================================
+    // Configure the Django application container
+    const djangoContainer = taskDefinition.addContainer('django-app', {
+      containerName: 'django-app',
       image: ecs.ContainerImage.fromEcrRepository(this.ecrRepository, 'latest'),
-      portMappings: [
-        {
-          containerPort: 5000, // Flask default port
-          protocol: ecs.Protocol.TCP,
-        },
-      ],
+
+      // Port mapping - Django runs on port 8000
+      portMappings: [{
+        containerPort: 8000,
+        protocol: ecs.Protocol.TCP,
+      }],
+
+      // Environment variables (non-sensitive)
       environment: {
-        FLASK_ENV: environment === 'prod' ? 'production' : 'development',
-        PORT: '5000',
+        DEBUG: environment === 'prod' ? 'false' : 'true',
         DB_HOST: dbEndpoint,
-        DB_PORT: '5432',
+        DB_PORT: '3306',
         DB_NAME: 'classicappdb',
         DB_USER: 'classicadmin',
       },
+
+      // Secrets (sensitive data from AWS Secrets Manager)
       secrets: {
         DB_PASSWORD: ecs.Secret.fromSecretsManager(dbSecret, 'password'),
       },
+
+      // Logging configuration
       logging: ecs.LogDrivers.awsLogs({
-        streamPrefix: 'classic-app',
-        logGroup,
+        streamPrefix: 'django-app',
+        logGroup: logGroup,
       }),
+
+      // Health check - Django health endpoint
       healthCheck: {
-        command: ['CMD-SHELL', 'curl -f http://localhost:5000/health || exit 1'],
+        command: ['CMD-SHELL', 'curl -f http://localhost:8000/health/ || exit 1'],
         interval: cdk.Duration.seconds(30),
         timeout: cdk.Duration.seconds(5),
         retries: 3,
@@ -107,122 +146,129 @@ export class EcsStack extends cdk.Stack {
       },
     });
 
-    // Application Load Balancer
-    this.alb = new elbv2.ApplicationLoadBalancer(this, 'ALB', {
-      vpc,
-      internetFacing: true,
-      loadBalancerName: `${environment}-classic-alb`,
-      vpcSubnets: {
-        subnetType: ec2.SubnetType.PUBLIC,
-      },
-    });
-
-    // ALB Security Group
+    // ========================================
+    // 7. SECURITY GROUPS
+    // ========================================
+    // ALB Security Group - controls traffic to load balancer
     const albSecurityGroup = new ec2.SecurityGroup(this, 'ALBSecurityGroup', {
-      vpc,
-      description: 'ALB security group',
+      vpc: vpc,
+      description: 'Security group for Application Load Balancer',
       allowAllOutbound: true,
     });
+    // Allow HTTP traffic from internet
+    albSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'Allow HTTP');
 
-    albSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'HTTP');
-    albSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(443), 'HTTPS');
-
-    // ECS Service Security Group
+    // ECS Service Security Group - controls traffic to containers
     const serviceSecurityGroup = new ec2.SecurityGroup(this, 'ServiceSecurityGroup', {
-      vpc,
-      description: 'ECS service security group',
+      vpc: vpc,
+      description: 'Security group for ECS service',
       allowAllOutbound: true,
     });
+    // Allow traffic from ALB to Django
+    serviceSecurityGroup.addIngressRule(albSecurityGroup, ec2.Port.tcp(8000), 'Allow ALB to Django');
 
-    serviceSecurityGroup.addIngressRule(albSecurityGroup, ec2.Port.tcp(5000), 'Flask');
-    dbSecurityGroup.addIngressRule(serviceSecurityGroup, ec2.Port.tcp(5432), 'PostgreSQL');
+    // Note: Database security group rules should be configured in RdsStack
+    // to avoid circular dependencies
 
-    // Target Group (port 5000 for Flask)
-    const targetGroup = new elbv2.ApplicationTargetGroup(this, 'TargetGroup', {
-      vpc,
-      port: 5000, // Changed from 3000 to 5000
+    // ========================================
+    // 8. APPLICATION LOAD BALANCER
+    // ========================================
+    // Distributes incoming traffic across multiple containers
+    this.alb = new elbv2.ApplicationLoadBalancer(this, 'DjangoALB', {
+      vpc: vpc,
+      internetFacing: true,  // Accessible from internet
+      loadBalancerName: `${environment}-django-alb`,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PUBLIC,  // Deploy in public subnets
+      },
+      securityGroup: albSecurityGroup,
+    });
+
+    // Target Group - defines where ALB sends traffic
+    const targetGroup = new elbv2.ApplicationTargetGroup(this, 'DjangoTargetGroup', {
+      vpc: vpc,
+      port: 8000,
       protocol: elbv2.ApplicationProtocol.HTTP,
-      targetType: elbv2.TargetType.IP,
+      targetType: elbv2.TargetType.IP,  // Fargate uses IP targeting
+
+      // Health check configuration
       healthCheck: {
-        path: '/health',
+        path: '/',
         interval: cdk.Duration.seconds(30),
         timeout: cdk.Duration.seconds(5),
         healthyThresholdCount: 2,
         unhealthyThresholdCount: 3,
       },
-      deregistrationDelay: cdk.Duration.seconds(30),
     });
 
-    // ALB Listener
+    // ALB Listener - listens for incoming requests
     this.alb.addListener('HTTPListener', {
       port: 80,
       protocol: elbv2.ApplicationProtocol.HTTP,
       defaultTargetGroups: [targetGroup],
     });
 
-    // Fargate Service
-    this.fargateService = new ecs.FargateService(this, 'FargateService', {
+    // ========================================
+    // 9. ECS SERVICE
+    // ========================================
+    // Runs and maintains desired number of tasks
+    this.fargateService = new ecs.FargateService(this, 'DjangoService', {
       cluster: this.cluster,
-      taskDefinition,
-      serviceName: `${environment}-classic-app-service`,
-      desiredCount: 1,
-      minHealthyPercent: 50,
-      maxHealthyPercent: 200,
+      taskDefinition: taskDefinition,
+      serviceName: `${environment}-django-service`,
+
+      // Deployment configuration
+      desiredCount: 1,          // Number of running tasks
+      minHealthyPercent: 50,    // Minimum healthy tasks during deployment
+      maxHealthyPercent: 200,   // Maximum tasks during deployment
+
+      // Network configuration
       vpcSubnets: {
-        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,  // Deploy in private subnets
       },
       securityGroups: [serviceSecurityGroup],
-      assignPublicIp: false,
+      assignPublicIp: false,    // No public IP needed (ALB handles internet traffic)
+
+      // Health and deployment settings
       healthCheckGracePeriod: cdk.Duration.seconds(60),
-      circuitBreaker: {
-        rollback: true,
-      },
-      enableExecuteCommand: true,
+      circuitBreaker: { rollback: true },  // Auto-rollback on failed deployments
+      enableExecuteCommand: true,          // Allow ECS Exec for debugging
     });
 
+    // Connect service to load balancer
     this.fargateService.attachToApplicationTargetGroup(targetGroup);
 
-    // Auto Scaling
+    // ========================================
+    // 10. AUTO SCALING (Optional)
+    // ========================================
+    // Automatically adjust number of tasks based on load
     const scaling = this.fargateService.autoScaleTaskCount({
       minCapacity: 1,
-      maxCapacity: 4,
+      maxCapacity: 3,
     });
 
+    // Scale based on CPU utilization
     scaling.scaleOnCpuUtilization('CpuScaling', {
       targetUtilizationPercent: 70,
-      scaleInCooldown: cdk.Duration.seconds(60),
-      scaleOutCooldown: cdk.Duration.seconds(60),
     });
 
-    scaling.scaleOnMemoryUtilization('MemoryScaling', {
-      targetUtilizationPercent: 80,
-      scaleInCooldown: cdk.Duration.seconds(60),
-      scaleOutCooldown: cdk.Duration.seconds(60),
-    });
-
-    // Outputs
-    new cdk.CfnOutput(this, 'LoadBalancerDNS', {
-      value: this.alb.loadBalancerDnsName,
-      description: 'Application Load Balancer DNS Name',
-      exportName: `${environment}-classic-alb-dns`,
+    // ========================================
+    // 11. OUTPUTS
+    // ========================================
+    // Export important values for other stacks or manual reference
+    new cdk.CfnOutput(this, 'LoadBalancerURL', {
+      value: `http://${this.alb.loadBalancerDnsName}`,
+      description: 'URL to access the Django application',
     });
 
     new cdk.CfnOutput(this, 'ECRRepositoryURI', {
       value: this.ecrRepository.repositoryUri,
-      description: 'ECR Repository URI',
-      exportName: `${environment}-classic-ecr-uri`,
+      description: 'ECR Repository URI for pushing Docker images',
     });
 
     new cdk.CfnOutput(this, 'ECSClusterName', {
       value: this.cluster.clusterName,
       description: 'ECS Cluster Name',
-      exportName: `${environment}-classic-cluster-name`,
-    });
-
-    new cdk.CfnOutput(this, 'ServiceName', {
-      value: this.fargateService.serviceName,
-      description: 'ECS Service Name',
-      exportName: `${environment}-classic-service-name`,
     });
   }
 }

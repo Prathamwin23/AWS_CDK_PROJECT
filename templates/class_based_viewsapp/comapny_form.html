@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <h1>{% if object %}Edit Company{% else %}Add New Company{% endif %}</h1>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="{{ form.Name.id_for_label }}" class="form-label">Company Name</label>
+                    {{ form.Name }}
+                </div>
+                <div class="mb-3">
+                    <label for="{{ form.ceo.id_for_label }}" class="form-label">CEO</label>
+                    {{ form.ceo }}
+                </div>
+                <div class="mb-3">
+                    <label for="{{ form.origin.id_for_label }}" class="form-label">Origin</label>
+                    {{ form.origin }}
+                </div>
+                <div class="mb-3">
+                    <label for="{{ form.est_year.id_for_label }}" class="form-label">Established Year</label>
+                    {{ form.est_year }}
+                </div>
+                <button type="submit" class="btn btn-primary">{% if object %}Update{% else %}Create{% endif %}</button>
+                <a href="{% url 'list' %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-control { margin-bottom: 10px; }
+input, select, textarea { 
+    width: 100%; 
+    padding: 8px; 
+    border: 1px solid #ddd; 
+    border-radius: 4px; 
+    box-sizing: border-box;
+}
+</style>
+{% endblock %}

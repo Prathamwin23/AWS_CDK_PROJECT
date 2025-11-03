@@ -11,8 +11,8 @@ const app = new cdk.App();
 
 // Configuration
 const environment = app.node.tryGetContext('environment') || 'dev';
-const region = app.node.tryGetContext('region') || 'us-east-1';
-const account = process.env.CDK_DEFAULT_ACCOUNT;
+const region = app.node.tryGetContext('region') || 'ap-south-1';
+const account = '516268691462'; // Your AWS account ID
 const alertEmail = app.node.tryGetContext('alertEmail') || 'your-email@example.com';
 
 const env = {
@@ -42,7 +42,6 @@ const ecsStack = new EcsStack(app, `${environment}-EcsStack`, {
   environment,
   dbSecret: rdsStack.dbSecret,
   dbEndpoint: rdsStack.dbInstance.dbInstanceEndpointAddress,
-  dbSecurityGroup: rdsStack.dbSecurityGroup,
   env,
   description: 'ECS Fargate cluster with Application Load Balancer',
 });
