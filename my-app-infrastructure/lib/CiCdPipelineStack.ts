@@ -9,9 +9,9 @@ import { Construct } from 'constructs';
 
 export interface CiCdPipelineStackProps extends cdk.StackProps {
   environment: string;
-  ecrRepository: ecr.Repository;
-  ecsCluster: ecs.Cluster;
-  ecsService: ecs.FargateService;
+  ecrRepository?: ecr.Repository;
+  ecsCluster?: ecs.Cluster;
+  ecsService?: ecs.FargateService;
   githubOwner?: string;
   githubRepo?: string;
   githubBranch?: string;
@@ -33,6 +33,23 @@ export class CiCdPipelineStack extends cdk.Stack {
       githubBranch = 'master'
     } = props;
 
+    // Import existing ECR repository if not provided
+    const ecrRepo = ecrRepository || ecr.Repository.fromRepositoryName(
+      this, 
+      'ExistingECRRepo', 
+      `${environment}/django-app`
+    );
+
+    // Import existing ECS service if not provided
+    const ecsServiceRef = ecsService || ecs.FargateService.fromFargateServiceAttributes(
+      this,
+      'ExistingECSService',
+      {
+        serviceName: `${environment}-django-service`,
+        cluster: ecs.Cluster.fromClusterArn(this, 'ExistingCluster', `arn:aws:ecs:${this.region}:${this.account}:cluster/${environment}-django-cluster`),
+      }
+    );
+
     // ========================================================================
     // STEP 1: Create CodeBuild Project (Build Docker Image)
     // ========================================================================
@@ -46,7 +63,7 @@ export class CiCdPipelineStack extends cdk.Stack {
       },
       environmentVariables: {
         ECR_REPOSITORY_URI: {
-          value: ecrRepository.repositoryUri,
+          value: ecrRepo.repositoryUri,
         },
         AWS_DEFAULT_REGION: {
           value: this.region,
@@ -96,7 +113,7 @@ export class CiCdPipelineStack extends cdk.Stack {
     });
 
     // Grant permissions to CodeBuild
-    ecrRepository.grantPullPush(buildProject);
+    ecrRepo.grantPullPush(buildProject);
 
     // ========================================================================
     // STEP 2: Create CodePipeline with GitHub Integration
@@ -165,7 +182,7 @@ export class CiCdPipelineStack extends cdk.Stack {
       actions: [
         new codepipeline_actions.EcsDeployAction({
           actionName: 'ECS_Deploy',
-          service: ecsService,
+          service: ecsServiceRef,
           input: buildOutput,
           deploymentTimeout: cdk.Duration.minutes(20),
         }),
