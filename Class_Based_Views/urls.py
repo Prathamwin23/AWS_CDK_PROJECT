@@ -20,7 +20,7 @@ from Class_Based_Viewsapp import views
 
 urlpatterns = [
     path('', views.Allcompanies.as_view(), name='home'),
-    path('company/', include(('Class_Based_Viewsapp.urls', 'Class_Based_Viewsapp'), namespace='company')),
+    path('', include('Class_Based_Viewsapp.urls')),
     path('admin/', admin.site.urls),
 ]
 
