@@ -154,7 +154,7 @@ export class CiCdPipelineStack extends cdk.Stack {
           actionName: 'ECS_Deploy',
           service: ecsService,
           input: buildOutput,
-          deploymentTimeout: cdk.Duration.minutes(10),
+          deploymentTimeout: cdk.Duration.minutes(20),
         }),
       ],
     });

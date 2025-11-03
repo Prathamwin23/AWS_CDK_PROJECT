@@ -19,14 +19,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy ALL files
 COPY . .
 
-# Ensure __init__.py files exist
+# Ensure __init__.py files exist and fix permissions
 RUN mkdir -p Class_Based_Views Class_Based_Viewsapp && \
-    touch Class_Based_Views/__init__.py Class_Based_Viewsapp/__init__.py
+    touch Class_Based_Views/__init__.py Class_Based_Viewsapp/__init__.py && \
+    chmod -R 755 /app
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app \
+    PYTHONPATH=/app:/app/Class_Based_Views:/app/Class_Based_Viewsapp \
     DJANGO_SETTINGS_MODULE=bulletproof_settings
 
 # Create static files directory

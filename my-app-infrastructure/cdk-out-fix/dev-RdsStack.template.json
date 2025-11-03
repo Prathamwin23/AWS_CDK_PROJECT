@@ -1,0 +1,354 @@
+{
+ "Description": "RDS PostgreSQL database instance",
+ "Resources": {
+  "DBCredentialsCBF39AE9": {
+   "Type": "AWS::SecretsManager::Secret",
+   "Properties": {
+    "Description": "RDS database credentials for Classic App",
+    "GenerateSecretString": {
+     "ExcludePunctuation": true,
+     "GenerateStringKey": "password",
+     "PasswordLength": 32,
+     "SecretStringTemplate": "{\"username\":\"classicadmin\"}"
+    },
+    "Name": "dev/classic-app/db-credentials",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "CDK"
+     },
+     {
+      "Key": "Project",
+      "Value": "MyApp"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "dev-RdsStack/DBCredentials/Resource"
+   }
+  },
+  "DBCredentialsAttachment5F5381AF": {
+   "Type": "AWS::SecretsManager::SecretTargetAttachment",
+   "Properties": {
+    "SecretId": {
+     "Ref": "DBCredentialsCBF39AE9"
+    },
+    "TargetId": {
+     "Ref": "MySQLInstance216DD474"
+    },
+    "TargetType": "AWS::RDS::DBInstance"
+   },
+   "Metadata": {
+    "aws:cdk:path": "dev-RdsStack/DBCredentials/Attachment/Resource"
+   }
+  },
+  "DBSecurityGroupE3B245A3": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "Security group for Classic App RDS MySQL",
+    "GroupName": "dev-classic-db-sg",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "255.255.255.255/32",
+      "Description": "Disallow all traffic",
+      "FromPort": 252,
+      "IpProtocol": "icmp",
+      "ToPort": 86
+     }
+    ],
+    "SecurityGroupIngress": [
+     {
+      "CidrIp": {
+       "Fn::ImportValue": "dev-VpcStack:ExportsOutputFnGetAttVpc8378EB38CidrBlock14DD2396"
+      },
+      "Description": "Allow MySQL access from VPC",
+      "FromPort": 3306,
+      "IpProtocol": "tcp",
+      "ToPort": 3306
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "CDK"
+     },
+     {
+      "Key": "Project",
+      "Value": "MyApp"
+     }
+    ],
+    "VpcId": {
+     "Fn::ImportValue": "dev-VpcStack:ExportsOutputRefVpc8378EB38272D6E3A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "dev-RdsStack/DBSecurityGroup/Resource"
+   }
+  },
+  "DBSubnetGroup": {
+   "Type": "AWS::RDS::DBSubnetGroup",
+   "Properties": {
+    "DBSubnetGroupDescription": "Subnet group for Classic App RDS",
+    "DBSubnetGroupName": "dev-classic-db-subnet-group",
+    "SubnetIds": [
+     {
+      "Fn::ImportValue": "dev-VpcStack:ExportsOutputRefVpcdatabaseSubnet1SubnetD53A427B17FFBFBA"
+     },
+     {
+      "Fn::ImportValue": "dev-VpcStack:ExportsOutputRefVpcdatabaseSubnet2Subnet75663D630D32CD6A"
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "CDK"
+     },
+     {
+      "Key": "Project",
+      "Value": "MyApp"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "dev-RdsStack/DBSubnetGroup/Default"
+   }
+  },
+  "MySQLInstance216DD474": {
+   "Type": "AWS::RDS::DBInstance",
+   "Properties": {
+    "AllocatedStorage": "20",
+    "AutoMinorVersionUpgrade": true,
+    "BackupRetentionPeriod": 7,
+    "CopyTagsToSnapshot": true,
+    "DBInstanceClass": "db.t3.micro",
+    "DBInstanceIdentifier": "dev-classic-app-db",
+    "DBName": "classicappdb",
+    "DBSubnetGroupName": {
+     "Ref": "DBSubnetGroup"
+    },
+    "DeletionProtection": false,
+    "EnableCloudwatchLogsExports": [
+     "error"
+    ],
+    "EnablePerformanceInsights": false,
+    "Engine": "mysql",
+    "EngineVersion": "8.0.39",
+    "MasterUserPassword": {
+     "Fn::Join": [
+      "",
+      [
+       "{{resolve:secretsmanager:",
+       {
+        "Ref": "DBCredentialsCBF39AE9"
+       },
+       ":SecretString:password::}}"
+      ]
+     ]
+    },
+    "MasterUsername": {
+     "Fn::Join": [
+      "",
+      [
+       "{{resolve:secretsmanager:",
+       {
+        "Ref": "DBCredentialsCBF39AE9"
+       },
+       ":SecretString:username::}}"
+      ]
+     ]
+    },
+    "MultiAZ": false,
+    "PreferredBackupWindow": "03:00-04:00",
+    "PreferredMaintenanceWindow": "sun:04:00-sun:05:00",
+    "PubliclyAccessible": false,
+    "StorageEncrypted": true,
+    "StorageType": "gp2",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "CDK"
+     },
+     {
+      "Key": "Project",
+      "Value": "MyApp"
+     }
+    ],
+    "VPCSecurityGroups": [
+     {
+      "Fn::GetAtt": [
+       "DBSecurityGroupE3B245A3",
+       "GroupId"
+      ]
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Snapshot",
+   "DeletionPolicy": "Snapshot",
+   "Metadata": {
+    "aws:cdk:path": "dev-RdsStack/MySQLInstance/Resource"
+   }
+  },
+  "DBLogGroupBEF6BF8B": {
+   "Type": "AWS::Logs::LogGroup",
+   "Properties": {
+    "LogGroupName": "/aws/rds/instance/dev-classic-app-db/error",
+    "RetentionInDays": 7,
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "CDK"
+     },
+     {
+      "Key": "Project",
+      "Value": "MyApp"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "dev-RdsStack/DBLogGroup/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/5VTUY8TNxD+LfgR+bYQCSrlLRSKIo5ySo72IUJoYk82vvParmd8IV3tf69sbza5A1H1yfaMZ/zN932eNbOXr5oXz+BAV0rfX1mzbfo1g7qXcKCvPaGKyNSBgxZj06/LedOLmvgDOhRz8VxIoZFUNIGNd2OkRYcRGGvNmqNxrZifSuv5FrtggfFpSUl+wOMYx2/KJo03ySlOUN/gmFCKAEQHH/U1upb35fogRcTOP4C98dao3EMjcfRHMXyRv+1cBSTrcguxRV4wg9p36M6zjU9zydfGF9VPywaJalb4SdHw8X30KWx68RDU2IcuMz/lDaz1h4W1nxJvfXJazHdgCQfZC9B66dqIRKtkUcw3vVDgls4ahzVSWVHeOVS5J41NkzN/J1zqkaF+kOK5+DJNdIY2yKip6ddp65C/H+N7uA9B1ctUxC3b22PI8y3JZ3F1loTODS+m/7lQb99cwJBvgWELhEtHDE7hphdm3C41OjY7g/FkGNcahxlQ3Y2AihDGtRY/E8aV5+KlRQjWKLiYqRb9iZFKrBe7ZO10LFc6uPPxMjRkM0bokDEWwL9DZ+zxUcdHIUoh+Mi0QtArLBDegLpPgaqMg5zmu4B/luL/E/8jK5KYb7IVpFARC41gT6bRI+MXgmVzqtx6zT5CO5FaT+PzbZidY++ciseQwYzm7JJls/hntLUUIW2tUfa4UAqJzDbbeExBYv/RuInoz6GNoCebbwtdK+QMe1ImRNxhjKgrm38Zp/3hae4jGMfoMrmPLmi0mHvdRM/1B01gnnqVHATaexZSKOuTPgCr/bVv6d23ouukPGwt3mDc+dgVszoy7T7n678erX6y9SCtb6npr317+n523D76ONPQv/7XNzp1GoZ8+pQ4JB6k8xqbO/rlYTZrXr5uXjy7I2OuYnJsOmxWdf0XOqdENyAGAAA="
+   },
+   "Metadata": {
+    "aws:cdk:path": "dev-RdsStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "DBEndpoint": {
+   "Description": "RDS Endpoint Address",
+   "Value": {
+    "Fn::GetAtt": [
+     "MySQLInstance216DD474",
+     "Endpoint.Address"
+    ]
+   },
+   "Export": {
+    "Name": "dev-classic-db-endpoint"
+   }
+  },
+  "DBPort": {
+   "Description": "RDS Port",
+   "Value": {
+    "Fn::GetAtt": [
+     "MySQLInstance216DD474",
+     "Endpoint.Port"
+    ]
+   },
+   "Export": {
+    "Name": "dev-classic-db-port"
+   }
+  },
+  "DBName": {
+   "Description": "Database Name",
+   "Value": "classicappdb",
+   "Export": {
+    "Name": "dev-classic-db-name"
+   }
+  },
+  "DBSecretArn": {
+   "Description": "DB Credentials Secret ARN",
+   "Value": {
+    "Ref": "DBCredentialsCBF39AE9"
+   },
+   "Export": {
+    "Name": "dev-classic-db-secret-arn"
+   }
+  },
+  "DBSecurityGroupId": {
+   "Description": "DB Security Group ID",
+   "Value": {
+    "Fn::GetAtt": [
+     "DBSecurityGroupE3B245A3",
+     "GroupId"
+    ]
+   },
+   "Export": {
+    "Name": "dev-classic-db-sg-id"
+   }
+  },
+  "ExportsOutputRefDBCredentialsCBF39AE96FE42413": {
+   "Value": {
+    "Ref": "DBCredentialsCBF39AE9"
+   },
+   "Export": {
+    "Name": "dev-RdsStack:ExportsOutputRefDBCredentialsCBF39AE96FE42413"
+   }
+  },
+  "ExportsOutputFnGetAttMySQLInstance216DD474EndpointAddress91ECF01B": {
+   "Value": {
+    "Fn::GetAtt": [
+     "MySQLInstance216DD474",
+     "Endpoint.Address"
+    ]
+   },
+   "Export": {
+    "Name": "dev-RdsStack:ExportsOutputFnGetAttMySQLInstance216DD474EndpointAddress91ECF01B"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

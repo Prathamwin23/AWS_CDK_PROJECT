@@ -1,0 +1,21 @@
+{
+  "version": "48.0.0",
+  "files": {
+    "0eaced16d5c1380540d3796d03c46faeca3573770f2e9e971fe7d8f82a8e0a69": {
+      "displayName": "dev-EcsStack Template",
+      "source": {
+        "path": "dev-EcsStack.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "516268691462-ap-south-1-b933ed42": {
+          "bucketName": "cdk-hnb659fds-assets-516268691462-ap-south-1",
+          "objectKey": "0eaced16d5c1380540d3796d03c46faeca3573770f2e9e971fe7d8f82a8e0a69.json",
+          "region": "ap-south-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::516268691462:role/cdk-hnb659fds-file-publishing-role-516268691462-ap-south-1"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}
