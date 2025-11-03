@@ -59,14 +59,17 @@ const cloudWatchStack = new CloudWatchStack(app, `${environment}-CloudWatchStack
 });
 cloudWatchStack.addDependency(ecsStack);
 
-// Stack 5: CI/CD Pipeline - CodeCommit + CodeBuild + CodePipeline
+// Stack 5: CI/CD Pipeline - GitHub + CodeBuild + CodePipeline
 const cicdStack = new CiCdPipelineStack(app, `${environment}-CiCdPipelineStack`, {
   environment,
   ecrRepository: ecsStack.ecrRepository,
   ecsCluster: ecsStack.cluster,
   ecsService: ecsStack.fargateService,
+  githubOwner: 'Prathamwin23',
+  githubRepo: 'AWS_CDK_PROJECT',
+  githubBranch: 'master',
   env,
-  description: 'CI/CD Pipeline with CodeCommit, CodeBuild, and CodePipeline',
+  description: 'CI/CD Pipeline with GitHub, CodeBuild, and CodePipeline',
 });
 cicdStack.addDependency(ecsStack);
 

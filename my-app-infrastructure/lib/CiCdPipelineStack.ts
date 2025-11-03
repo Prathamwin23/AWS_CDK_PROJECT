@@ -1,5 +1,4 @@
 import * as cdk from 'aws-cdk-lib';
-import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
@@ -13,29 +12,29 @@ export interface CiCdPipelineStackProps extends cdk.StackProps {
   ecrRepository: ecr.Repository;
   ecsCluster: ecs.Cluster;
   ecsService: ecs.FargateService;
+  githubOwner?: string;
+  githubRepo?: string;
+  githubBranch?: string;
 }
 
 export class CiCdPipelineStack extends cdk.Stack {
   public readonly pipeline: codepipeline.Pipeline;
-  public readonly sourceBucket: s3.Bucket;
 
   constructor(scope: Construct, id: string, props: CiCdPipelineStackProps) {
     super(scope, id, props);
 
-    const { environment, ecrRepository, ecsCluster, ecsService } = props;
+    const { 
+      environment, 
+      ecrRepository, 
+      ecsCluster, 
+      ecsService,
+      githubOwner = 'Prathamwin23',
+      githubRepo = 'AWS_CDK_PROJECT',
+      githubBranch = 'master'
+    } = props;
 
     // ========================================================================
-    // STEP 1: Create S3 Bucket for Source Code
-    // ========================================================================
-    this.sourceBucket = new s3.Bucket(this, 'SourceBucket', {
-      bucketName: `${environment}-my-app-source-${this.account}`,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-      versioned: true,
-    });
-
-    // ========================================================================
-    // STEP 2: Create CodeBuild Project (Build Docker Image)
+    // STEP 1: Create CodeBuild Project (Build Docker Image)
     // ========================================================================
     const buildProject = new codebuild.PipelineProject(this, 'BuildProject', {
       projectName: `${environment}-my-app-build`,
@@ -100,7 +99,7 @@ export class CiCdPipelineStack extends cdk.Stack {
     ecrRepository.grantPullPush(buildProject);
 
     // ========================================================================
-    // STEP 3: Create CodePipeline
+    // STEP 2: Create CodePipeline with GitHub Integration
     // ========================================================================
     
     // Artifacts
@@ -114,18 +113,32 @@ export class CiCdPipelineStack extends cdk.Stack {
     });
 
     // ========================================================================
-    // STAGE 1: Source Stage (S3)
+    // STAGE 1: Source Stage (GitHub)
     // ========================================================================
     this.pipeline.addStage({
       stageName: 'Source',
       actions: [
-        new codepipeline_actions.S3SourceAction({
-          actionName: 'S3_Source',
-          bucket: this.sourceBucket,
-          bucketKey: 'source.zip',
+        // Option 1: Using GitHub OAuth Token (Legacy but simpler)
+        new codepipeline_actions.GitHubSourceAction({
+          actionName: 'GitHub_Source',
+          owner: githubOwner,
+          repo: githubRepo,
+          branch: githubBranch,
+          oauthToken: cdk.SecretValue.secretsManager('github-token'),
           output: sourceOutput,
-          trigger: codepipeline_actions.S3Trigger.EVENTS,
+          trigger: codepipeline_actions.GitHubTrigger.WEBHOOK,
         }),
+        
+        // Option 2: Using CodeStar Connections (Modern approach - uncomment to use)
+        // new codepipeline_actions.CodeStarConnectionsSourceAction({
+        //   actionName: 'GitHub_Source',
+        //   owner: githubOwner,
+        //   repo: githubRepo,
+        //   branch: githubBranch,
+        //   connectionArn: `arn:aws:codestar-connections:${this.region}:${this.account}:connection/github-connection`,
+        //   output: sourceOutput,
+        //   triggerOnPush: true,
+        // }),
       ],
     });
 
@@ -162,12 +175,6 @@ export class CiCdPipelineStack extends cdk.Stack {
     // ========================================================================
     // Outputs
     // ========================================================================
-    new cdk.CfnOutput(this, 'SourceBucketName', {
-      value: this.sourceBucket.bucketName,
-      description: 'S3 Bucket for Source Code',
-      exportName: `${environment}-source-bucket-name`,
-    });
-
     new cdk.CfnOutput(this, 'PipelineName', {
       value: this.pipeline.pipelineName,
       description: 'CodePipeline Name',
@@ -179,8 +186,13 @@ export class CiCdPipelineStack extends cdk.Stack {
       description: 'CodePipeline Console URL',
     });
 
+    new cdk.CfnOutput(this, 'GitHubIntegration', {
+      value: 'Pipeline automatically triggers on GitHub push to master branch',
+      description: 'GitHub Integration Status',
+    });
+
     new cdk.CfnOutput(this, 'DeploymentInstructions', {
-      value: `To deploy: zip your code and upload as 'source.zip' to bucket '${this.sourceBucket.bucketName}'`,
+      value: 'Push code to GitHub master branch to trigger automatic deployment',
       description: 'How to trigger deployments',
     });
   }
