@@ -12,7 +12,7 @@ class Comapny(models.Model):
         return self.Name
 
     def get_absolute_url(self):
-        return reverse("detail",kwargs={"pk":self.pk})
+        return reverse("company:detail",kwargs={"pk":self.pk})
 
 class Product(models.Model):
     Prouct_Name= models.CharField(max_length=100)
