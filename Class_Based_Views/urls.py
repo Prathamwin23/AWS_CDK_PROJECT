@@ -19,9 +19,11 @@ from django.urls import path, include
 from Class_Based_Viewsapp import views
 
 urlpatterns = [
-    path('', views.Allcompanies.as_view(), name='home'),
-    path('', include('Class_Based_Viewsapp.urls')),
     path('admin/', admin.site.urls),
+    # Home page - standalone
+    path('', views.Allcompanies.as_view(), name='home'),
+    # All company-related URLs with namespace
+    path('company/', include(('Class_Based_Viewsapp.urls', 'Class_Based_Viewsapp'), namespace='company')),
 ]
 
 
