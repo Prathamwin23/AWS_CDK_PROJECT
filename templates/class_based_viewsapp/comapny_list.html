@@ -4,16 +4,20 @@
 <div class="container">
     <div class="row">
         <div class="col-md-12">
-            <h1>All Companies</h1>
-            <a href="{% url 'company:add' %}" class="btn btn-primary mb-3">Add New Company</a>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="text-primary">🏢 All Companies</h1>
+                <a href="{% url 'company:add' %}" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Add New Company
+                </a>
+            </div>
             
             {% if object_list %}
                 <div class="row">
                     {% for company in object_list %}
                     <div class="col-md-4 mb-3">
-                        <div class="card">
+                        <div class="card shadow-sm border-0">
                             <div class="card-body">
-                                <h5 class="card-title">{{ company.Name }}</h5>
+                                <h5 class="card-title text-success">🏢 {{ company.Name }}</h5>
                                 <p class="card-text">
                                     <strong>CEO:</strong> {{ company.ceo }}<br>
                                     <strong>Origin:</strong> {{ company.origin }}<br>
