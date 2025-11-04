@@ -6,7 +6,7 @@ A production-grade Django web application deployed on AWS using CDK, ECS (Fargat
 
 This project demonstrates a complete DevOps pipeline — from infrastructure provisioning to CI/CD and monitoring — built entirely with AWS CDK.
 
-🔹 Tech Stack
+🧰 Tech Stack
 
 AWS Services: VPC, ECS Fargate, RDS MySQL, ECR, ALB, CloudWatch, Secrets Manager
 
@@ -18,14 +18,14 @@ Application: Django (Python)
 
 Containerization: Docker
 
-📂 Infrastructure Stacks
+📦 Infrastructure Stacks
 Stack Name	Description
 VpcStack	Creates custom VPC with public & private subnets
 RdsStack	Deploys RDS MySQL database in private subnet
 EcsStack	Defines ECS cluster, Fargate service, and ALB
 CiCdPipelineStack	Automates builds & deployments from GitHub
 ⚙️ AWS CDK Commands
-🧩 Deploy Infrastructure
+🚀 Deploy Infrastructure
 cd my-app-infrastructure
 npm install
 cdk bootstrap
@@ -42,16 +42,16 @@ cdk deploy CiCdPipelineStack
 cdk destroy --all
 
 🐳 Docker Commands
-🏗️ Build and Test Locally
+🧱 Build and Test Locally
 docker build -t django-app .
 docker run -p 8000:8000 django-app
 
-📤 Push to ECR
+☁️ Push to ECR
 aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 516268691462.dkr.ecr.ap-south-1.amazonaws.com
 docker tag django-app:latest 516268691462.dkr.ecr.ap-south-1.amazonaws.com/dev/django-app:latest
 docker push 516268691462.dkr.ecr.ap-south-1.amazonaws.com/dev/django-app:latest
 
-📦 ECS Monitoring Commands
+📊 ECS Monitoring Commands
 🔍 Check Service Status
 aws ecs describe-services --cluster dev-django-cluster --services dev-django-service --region ap-south-1
 
@@ -64,8 +64,8 @@ aws ecs describe-tasks --cluster dev-django-cluster --tasks TASK_ID --region ap-
 🔁 Force New Deployment
 aws ecs update-service --cluster dev-django-cluster --service dev-django-service --force-new-deployment --region ap-south-1
 
-📋 Logs & Debugging
-🧩 View Application Logs
+🪵 Logs & Debugging
+📜 Get Application Logs
 aws logs describe-log-streams --log-group-name "/ecs/dev/django-app" --region ap-south-1 --order-by LastEventTime --descending --max-items 1
 aws logs get-log-events --log-group-name "/ecs/dev/django-app" --log-stream-name "STREAM_NAME" --region ap-south-1
 
@@ -73,34 +73,34 @@ aws logs get-log-events --log-group-name "/ecs/dev/django-app" --log-stream-name
 curl -I http://dev-django-alb-1402722688.ap-south-1.elb.amazonaws.com/
 
 🔄 CI/CD Pipeline Commands
-📊 Check Pipeline Status
+📈 Check Pipeline Status
 aws codepipeline get-pipeline-state --name dev-my-app-pipeline --region ap-south-1
 
 🚀 Trigger Manual Build
 aws codepipeline start-pipeline-execution --name dev-my-app-pipeline --region ap-south-1
 
 🗄️ Database Commands
-🔗 Connect to RDS
+💾 Connect to RDS
 mysql -h dev-classic-app-db.cfqe002kq5rb.ap-south-1.rds.amazonaws.com -u classicadmin -p classicappdb
 
 🔐 Retrieve DB Credentials
 aws secretsmanager get-secret-value --secret-id "dev/classic-app/db-credentials" --region ap-south-1
 
-🔧 Django Local Development
-💻 Run Locally
+🧑‍💻 Django Local Development
+⚙️ Run Locally
 python manage.py runserver
 python manage.py makemigrations
 python manage.py migrate
 python manage.py populate_data
 
 📝 Git Commands
-🚀 Deploy Changes (Triggers CI/CD)
+🪄 Deploy Changes (Triggers CI/CD)
 git add .
 git commit -m "Your message"
 git push origin master
 
 🚨 Emergency Commands
-🛑 Stop All ECS Tasks
+⛔ Stop All ECS Tasks
 aws ecs update-service --cluster dev-django-cluster --service dev-django-service --desired-count 0 --region ap-south-1
 
 🔁 Restart ECS Service
@@ -113,19 +113,19 @@ aws ecs list-task-definitions --family-prefix dev-django-app --region ap-south-1
 
 🧠 Always check logs first when debugging
 
-🧩 Use --query and --output text for clean outputs
+📊 Use --query and --output text for clean outputs
 
 🚀 Every git push auto-triggers CI/CD
 
-⏳ ALB health checks take 2–3 minutes after new deployments
+⏳ ALB health checks take 2–3 minutes to stabilize
 
-🌐 Keep your ALB URL handy for quick tests
+🌐 Keep your ALB URL handy for quick testing
 
-🧰 Author
+👨‍💻 Author
 
-👨‍💻 Pratham Patel
+Pratham Patel
 AWS | DevOps | Python | Cloud Automation
 📍 LinkedIn
  • ✉️ pratham@example.com
 
-⭐ If you found this project useful, don’t forget to give it a star!
+⭐ If you found this project useful, please give it a star!
