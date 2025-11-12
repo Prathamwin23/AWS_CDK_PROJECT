@@ -1,0 +1,9 @@
+{
+  "commands": [
+    "echo 'Granting database access to classicadmin user...'",
+    "mysql -h dev-classic-app-db.cfqe002kq5rb.ap-south-1.rds.amazonaws.com -u classicadmin -pspH4nfnPyFiAlnRTyj3EMtDciABKP0p2 -e 'GRANT ALL PRIVILEGES ON classicappdb.* TO CURRENT_USER();'",
+    "mysql -h dev-classic-app-db.cfqe002kq5rb.ap-south-1.rds.amazonaws.com -u classicadmin -pspH4nfnPyFiAlnRTyj3EMtDciABKP0p2 -e 'FLUSH PRIVILEGES;'",
+    "mysql -h dev-classic-app-db.cfqe002kq5rb.ap-south-1.rds.amazonaws.com -u classicadmin -pspH4nfnPyFiAlnRTyj3EMtDciABKP0p2 classicappdb -e 'SELECT \"Database access granted successfully!\" AS Status;'",
+    "echo 'Database permissions fixed!'"
+  ]
+}

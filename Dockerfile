@@ -35,9 +35,6 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8000/health/ || exit 1
 
-# Run the application
-CMD python manage.py makemigrations && \
-    python manage.py migrate && \
-    python manage.py populate_data && \
-    python manage.py collectstatic --noinput && \
-    python manage.py runserver 0.0.0.0:8000
+# Run the application with gunicorn (doesn't check DB on startup)
+CMD python manage.py collectstatic --noinput && \
+    gunicorn Class_Based_Views.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 60

@@ -2,8 +2,11 @@
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { VpcStack } from '../lib/VpcStack';
+import { EcrStack } from '../lib/EcrStack';
 import { RdsStack } from '../lib/RdsStack';
+import { BastionStack } from '../lib/BastionStack';
 import { EcsStack } from '../lib/EcsStack';
+import { ApiGatewayStack } from '../lib/ApiGatewayStack';
 import { CloudWatchStack } from '../lib/CloudWatchStack';
 import { CiCdPipelineStack } from '../lib/CiCdPipelineStack';
 
@@ -13,7 +16,7 @@ const app = new cdk.App();
 const environment = app.node.tryGetContext('environment') || 'dev';
 const region = app.node.tryGetContext('region') || 'ap-south-1';
 const account = '516268691462'; // Your AWS account ID
-const alertEmail = app.node.tryGetContext('alertEmail') || 'your-email@example.com';
+const alertEmail = app.node.tryGetContext('alertEmail') || 'prathampatel02312003@gmail.com';
 
 const env = {
   account,
@@ -27,16 +30,33 @@ const vpcStack = new VpcStack(app, `${environment}-VpcStack`, {
   description: 'VPC with public, private, and database subnets',
 });
 
-// Stack 2: RDS - PostgreSQL Database
+// Stack 2: ECR - Docker Image Repository
+const ecrStack = new EcrStack(app, `${environment}-EcrStack`, {
+  environment,
+  env,
+  description: 'ECR repository for Docker images',
+});
+
+// Stack 3: RDS - MySQL Database
 const rdsStack = new RdsStack(app, `${environment}-RdsStack`, {
   vpc: vpcStack.vpc,
   environment,
   env,
-  description: 'RDS PostgreSQL database instance',
+  description: 'RDS MySQL database instance',
 });
 rdsStack.addDependency(vpcStack);
 
-// Stack 3: ECS - Application Container Service
+// Stack 3.5: Bastion Host for RDS Access
+const bastionStack = new BastionStack(app, `${environment}-BastionStack`, {
+  vpc: vpcStack.vpc,
+  environment,
+  dbSecurityGroup: rdsStack.dbSecurityGroup,
+  env,
+  description: 'Bastion host for RDS database access',
+});
+bastionStack.addDependency(vpcStack);
+
+// Stack 4: ECS - Application Container Service
 const ecsStack = new EcsStack(app, `${environment}-EcsStack`, {
   vpc: vpcStack.vpc,
   environment,
@@ -47,8 +67,18 @@ const ecsStack = new EcsStack(app, `${environment}-EcsStack`, {
 });
 ecsStack.addDependency(vpcStack);
 ecsStack.addDependency(rdsStack);
+ecsStack.addDependency(ecrStack);
 
-// Stack 4: CloudWatch - Monitoring & Alarms
+// Stack 5: API Gateway with Direct HTTP Integration
+const apiGatewayStack = new ApiGatewayStack(app, `${environment}-ApiGatewayStack`, {
+  environment,
+  alb: ecsStack.alb,
+  env,
+  description: 'API Gateway with Direct HTTP Integration to ALB',
+});
+apiGatewayStack.addDependency(ecsStack);
+
+// Stack 6: CloudWatch - Monitoring & Alarms
 const cloudWatchStack = new CloudWatchStack(app, `${environment}-CloudWatchStack`, {
   environment,
   ecsCluster: ecsStack.cluster,
@@ -59,7 +89,7 @@ const cloudWatchStack = new CloudWatchStack(app, `${environment}-CloudWatchStack
 });
 cloudWatchStack.addDependency(ecsStack);
 
-// Stack 5: CI/CD Pipeline - GitHub + CodeBuild + CodePipeline
+// Stack 7: CI/CD Pipeline - GitHub + CodeBuild + CodePipeline
 const cicdStack = new CiCdPipelineStack(app, `${environment}-CiCdPipelineStack`, {
   environment,
   // Use existing resources by name instead of references

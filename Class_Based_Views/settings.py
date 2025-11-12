@@ -26,7 +26,18 @@ SECRET_KEY = 'django-insecure-_fp*vsgsn*lx09!$5(e7d)pb4f9mttodq_u18k97yxexm7n$tx
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'dev-django-alb-571955020.ap-south-1.elb.amazonaws.com',  # ALB DNS
+    'e3wz1363xk.execute-api.ap-south-1.amazonaws.com',        # API Gateway
+    'localhost',
+    '127.0.0.1',
+]
+
+# Add CSRF trusted origins for API Gateway
+CSRF_TRUSTED_ORIGINS = [
+    'https://e3wz1363xk.execute-api.ap-south-1.amazonaws.com',
+    'http://dev-django-alb-571955020.ap-south-1.elb.amazonaws.com',
+]
 
 
 # Application definition

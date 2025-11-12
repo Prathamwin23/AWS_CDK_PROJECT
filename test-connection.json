@@ -1,0 +1,8 @@
+{
+  "commands": [
+    "echo 'Testing database connection and permissions...'",
+    "mysql -h dev-classic-app-db.cfqe002kq5rb.ap-south-1.rds.amazonaws.com -u classicadmin -pspH4nfnPyFiAlnRTyj3EMtDciABKP0p2 -e 'SELECT USER(), CURRENT_USER();'",
+    "mysql -h dev-classic-app-db.cfqe002kq5rb.ap-south-1.rds.amazonaws.com -u classicadmin -pspH4nfnPyFiAlnRTyj3EMtDciABKP0p2 -e 'SHOW DATABASES;'",
+    "mysql -h dev-classic-app-db.cfqe002kq5rb.ap-south-1.rds.amazonaws.com -u classicadmin -pspH4nfnPyFiAlnRTyj3EMtDciABKP0p2 classicappdb -e 'SHOW TABLES;'"
+  ]
+}

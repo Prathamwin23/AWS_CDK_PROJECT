@@ -1,0 +1,7 @@
+{
+  "commands": [
+    "echo 'Testing MySQL connection...'",
+    "mysql --version",
+    "mysql -h dev-classic-app-db.cfqe002kq5rb.ap-south-1.rds.amazonaws.com -u classicadmin -pspH4nfnPyFiAlnRTyj3EMtDciABKP0p2 -e 'SELECT VERSION();'"
+  ]
+}

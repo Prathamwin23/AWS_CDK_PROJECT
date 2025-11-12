@@ -36,6 +36,9 @@ export class RdsStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
+
+
+
     // Create security group for RDS
     this.dbSecurityGroup = new ec2.SecurityGroup(this, 'DBSecurityGroup', {
       vpc,
@@ -44,6 +47,7 @@ export class RdsStack extends cdk.Stack {
       allowAllOutbound: false,
     });
 
+    
     // Allow MySQL traffic from within VPC
     this.dbSecurityGroup.addIngressRule(
       ec2.Peer.ipv4(vpc.vpcCidrBlock),
@@ -56,44 +60,56 @@ export class RdsStack extends cdk.Stack {
       vpc,
       description: 'Subnet group for Classic App RDS',
       vpcSubnets: {
-        subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
       },
       subnetGroupName: `${environment}-classic-db-subnet-group`,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    // Create custom parameter group for MySQL 8.0 with relaxed authentication
+    const parameterGroup = new rds.ParameterGroup(this, 'MySQLParameterGroup', {
+      engine: rds.DatabaseInstanceEngine.mysql({
+        version: rds.MysqlEngineVersion.VER_8_0_39,
+      }),
+      description: 'Custom MySQL 8.0 parameter group for Django compatibility',
+      parameters: {
+        // Set authentication plugin to be more permissive for older clients
+        'default_authentication_plugin': 'mysql_native_password',
+      },
     });
 
     // Create RDS MySQL instance
     this.dbInstance = new rds.DatabaseInstance(this, 'MySQLInstance', {
       instanceIdentifier: `${environment}-classic-app-db`,
       engine: rds.DatabaseInstanceEngine.mysql({
-        version: rds.MysqlEngineVersion.VER_8_0_39, // MySQL 8.0 for Django compatibility
+        version: rds.MysqlEngineVersion.VER_8_0_39,
       }),
       instanceType: ec2.InstanceType.of(
         ec2.InstanceClass.T3,
-        ec2.InstanceSize.MICRO // Suitable for dev/staging
+        ec2.InstanceSize.MICRO
       ),
       vpc,
       vpcSubnets: {
-        subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
       },
       subnetGroup,
       securityGroups: [this.dbSecurityGroup],
       credentials: rds.Credentials.fromSecret(this.dbSecret),
       databaseName: 'classicappdb',
-      allocatedStorage: 20, // 20 GB minimum
-      storageType: rds.StorageType.GP2, // Use GP2 for better compatibility
+      parameterGroup: parameterGroup,
+      allocatedStorage: 20,
+      storageType: rds.StorageType.GP2,
       storageEncrypted: true,
-      multiAz: false, // Set to true for production
+      multiAz: false,
       publiclyAccessible: false,
       autoMinorVersionUpgrade: true,
-      backupRetention: cdk.Duration.days(7), // 7 days backup retention
-      preferredBackupWindow: '03:00-04:00', // UTC time
+      backupRetention: cdk.Duration.days(7),
+      preferredBackupWindow: '03:00-04:00',
       preferredMaintenanceWindow: 'sun:04:00-sun:05:00',
-      deletionProtection: false, // Set to true for production
-      removalPolicy: cdk.RemovalPolicy.SNAPSHOT, // Create snapshot on delete
-      cloudwatchLogsExports: ['error'], // Only enable error logs for simplicity
-      enablePerformanceInsights: false, // Not supported on t3.micro
-      // Remove monitoring interval to avoid issues
+      deletionProtection: false,
+      removalPolicy: cdk.RemovalPolicy.SNAPSHOT,
+      cloudwatchLogsExports: ['error'],
+      enablePerformanceInsights: false,
     });
 
     // Create custom log group for enhanced monitoring
