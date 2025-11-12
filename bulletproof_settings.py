@@ -12,6 +12,12 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = ['*']
 
+# CSRF trusted origins for API Gateway and ALB
+CSRF_TRUSTED_ORIGINS = [
+    'https://e3wz1363xk.execute-api.ap-south-1.amazonaws.com',
+    'http://dev-django-alb-571955020.ap-south-1.elb.amazonaws.com',
+]
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
