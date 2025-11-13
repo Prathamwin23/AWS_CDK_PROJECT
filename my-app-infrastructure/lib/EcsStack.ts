@@ -102,14 +102,14 @@ export class EcsStack extends cdk.Stack {
 
     const djangoContainer = taskDefinition.addContainer('django-app', containerConfig);
 
-    // ALB Security Group (Internal - only allow VPC traffic)
+    // ALB Security Group (Public - allow internet traffic)
     const albSecurityGroup = new ec2.SecurityGroup(this, 'ALBSecurityGroup', {
       vpc: vpc,
-      description: 'Security group for Internal Application Load Balancer',
+      description: 'Security group for Public Application Load Balancer',
       allowAllOutbound: true,
     });
-    // Allow HTTP from VPC (API Gateway VPC Link will connect from here)
-    albSecurityGroup.addIngressRule(ec2.Peer.ipv4(vpc.vpcCidrBlock), ec2.Port.tcp(80), 'Allow HTTP from VPC');
+    // Allow HTTP from anywhere (API Gateway will connect from internet)
+    albSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'Allow HTTP from internet');
 
     // ECS Service Security Group
     const serviceSecurityGroup = new ec2.SecurityGroup(this, 'ServiceSecurityGroup', {
@@ -119,24 +119,24 @@ export class EcsStack extends cdk.Stack {
     });
     serviceSecurityGroup.addIngressRule(albSecurityGroup, ec2.Port.tcp(8000), 'Allow ALB to Django');
 
-    // Application Load Balancer (Internal - Private)
+    // Application Load Balancer (Public - Internet-facing)
     this.alb = new elbv2.ApplicationLoadBalancer(this, 'DjangoALB', {
       vpc: vpc,
-      internetFacing: false, // Make it internal
-      loadBalancerName: `${environment}-django-internal-alb`, // New name to avoid conflict
+      internetFacing: true, // Make it public so API Gateway can reach it
+      loadBalancerName: `${environment}-django-public-alb`,
       vpcSubnets: {
-        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS, // Use private subnets
+        subnetType: ec2.SubnetType.PUBLIC, // Use public subnets
       },
       securityGroup: albSecurityGroup,
     });
 
-    // Target Group (New one for internal ALB)
+    // Target Group (Public ALB)
     const targetGroup = new elbv2.ApplicationTargetGroup(this, 'DjangoInternalTargetGroup', {
       vpc: vpc,
       port: 8000,
       protocol: elbv2.ApplicationProtocol.HTTP,
       targetType: elbv2.TargetType.IP,
-      targetGroupName: `${environment}-django-internal-tg`, // New name
+      targetGroupName: `${environment}-django-public-tg`,
       healthCheck: {
         path: '/health/',
         interval: cdk.Duration.seconds(30),
