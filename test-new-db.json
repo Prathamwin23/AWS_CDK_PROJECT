@@ -1,9 +1,0 @@
-{
-  "commands": [
-    "echo 'Testing new RDS MySQL connection...'",
-    "mysql -h dev-classic-app-db.cfqe002kq5rb.ap-south-1.rds.amazonaws.com -u classicadmin -pxV57RJcoWTTJQoWm85Wrb3dC499reO7a -e 'SELECT VERSION();'",
-    "mysql -h dev-classic-app-db.cfqe002kq5rb.ap-south-1.rds.amazonaws.com -u classicadmin -pxV57RJcoWTTJQoWm85Wrb3dC499reO7a -e 'SHOW DATABASES;'",
-    "mysql -h dev-classic-app-db.cfqe002kq5rb.ap-south-1.rds.amazonaws.com -u classicadmin -pxV57RJcoWTTJQoWm85Wrb3dC499reO7a classicappdb -e 'SELECT \"Database access successful!\" AS Status;'",
-    "echo 'RDS MySQL is working!'"
-  ]
-}

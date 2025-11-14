@@ -1,7 +1,0 @@
-{
-  "commands": [
-    "echo 'Checking if table exists...'",
-    "mysql -h dev-classic-app-db.cfqe002kq5rb.ap-south-1.rds.amazonaws.com -u classicadmin -pxV57RJcoWTTJQoWm85Wrb3dC499reO7a classicappdb -e 'SHOW TABLES;'",
-    "mysql -h dev-classic-app-db.cfqe002kq5rb.ap-south-1.rds.amazonaws.com -u classicadmin -pxV57RJcoWTTJQoWm85Wrb3dC499reO7a classicappdb -e 'DESCRIBE Class_Based_Viewsapp_comapny;' || echo 'Table does not exist'"
-  ]
-}

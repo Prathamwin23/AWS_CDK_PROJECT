@@ -1,7 +1,0 @@
-{
-  "commands": [
-    "echo 'Checking current MySQL users and privileges...'",
-    "mysql -h dev-classic-app-db.cfqe002kq5rb.ap-south-1.rds.amazonaws.com -u classicadmin -pspH4nfnPyFiAlnRTyj3EMtDciABKP0p2 -e \"SELECT User, Host FROM mysql.user;\"",
-    "mysql -h dev-classic-app-db.cfqe002kq5rb.ap-south-1.rds.amazonaws.com -u classicadmin -pspH4nfnPyFiAlnRTyj3EMtDciABKP0p2 -e \"SHOW GRANTS FOR CURRENT_USER();\""
-  ]
-}

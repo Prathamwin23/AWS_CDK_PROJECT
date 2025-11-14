@@ -1,8 +1,0 @@
-{
-  "commands": [
-    "echo 'Inserting sample data...'",
-    "mysql -h dev-classic-app-db.cfqe002kq5rb.ap-south-1.rds.amazonaws.com -u classicadmin -pxV57RJcoWTTJQoWm85Wrb3dC499reO7a classicappdb -e \"INSERT INTO Class_Based_Viewsapp_comapny (Name, ceo, origin, est_year) VALUES ('Tesla', 'Elon Musk', 'USA', 2003), ('Toyota', 'Akio Toyoda', 'Japan', 1937), ('BMW', 'Oliver Zipse', 'Germany', 1916);\"",
-    "mysql -h dev-classic-app-db.cfqe002kq5rb.ap-south-1.rds.amazonaws.com -u classicadmin -pxV57RJcoWTTJQoWm85Wrb3dC499reO7a classicappdb -e 'SELECT * FROM Class_Based_Viewsapp_comapny;'",
-    "echo 'Sample data inserted successfully!'"
-  ]
-}
