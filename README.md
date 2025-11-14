@@ -1,5 +1,25 @@
 # 🚀 Django on AWS with CDK - Full Stack Deployment
 
+<div align="center">
+
+![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
+![Django](https://img.shields.io/badge/django-%23092E20.svg?style=for-the-badge&logo=django&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
+![MySQL](https://img.shields.io/badge/mysql-%2300f.svg?style=for-the-badge&logo=mysql&logoColor=white)
+
+<img src="https://raw.githubusercontent.com/aws/aws-cdk/main/logo/default-256-dark.png" alt="AWS CDK" width="120"/>
+
+### Production-Ready Django Application on AWS Cloud
+
+*Infrastructure as Code • Automated CI/CD • Containerized Deployment • Managed Database*
+
+[Features](#-overview) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [Deployment](#-deployment) • [Documentation](#-table-of-contents)
+
+---
+
+</div>
+
 A production-ready Django application deployed on AWS using Infrastructure as Code (CDK), featuring automated CI/CD, containerization, and managed database services.
 
 ## 📋 Table of Contents
@@ -924,4 +944,52 @@ This project is licensed under the MIT License.
 
 ---
 
+<div align="center">
+
+### 📊 Project Stats
+
+![Lines of Code](https://img.shields.io/badge/Lines%20of%20Code-5000%2B-blue?style=flat-square)
+![AWS Services](https://img.shields.io/badge/AWS%20Services-10%2B-orange?style=flat-square)
+![Infrastructure](https://img.shields.io/badge/Infrastructure-As%20Code-green?style=flat-square)
+![Deployment](https://img.shields.io/badge/Deployment-Automated-success?style=flat-square)
+
+### 🛠️ Built With
+
+<table>
+<tr>
+<td align="center" width="96">
+<img src="https://skillicons.dev/icons?i=aws" width="48" height="48" alt="AWS" />
+<br>AWS
+</td>
+<td align="center" width="96">
+<img src="https://skillicons.dev/icons?i=django" width="48" height="48" alt="Django" />
+<br>Django
+</td>
+<td align="center" width="96">
+<img src="https://skillicons.dev/icons?i=docker" width="48" height="48" alt="Docker" />
+<br>Docker
+</td>
+<td align="center" width="96">
+<img src="https://skillicons.dev/icons?i=typescript" width="48" height="48" alt="TypeScript" />
+<br>TypeScript
+</td>
+<td align="center" width="96">
+<img src="https://skillicons.dev/icons?i=mysql" width="48" height="48" alt="MySQL" />
+<br>MySQL
+</td>
+<td align="center" width="96">
+<img src="https://skillicons.dev/icons?i=python" width="48" height="48" alt="Python" />
+<br>Python
+</td>
+</tr>
+</table>
+
+### ⭐ If you found this project helpful, please give it a star!
+
+---
+
 **Built with ❤️ using AWS CDK and Django**
+
+*Deployed on AWS Cloud • Secured with VPC • Automated with CI/CD*
+
+</div>
