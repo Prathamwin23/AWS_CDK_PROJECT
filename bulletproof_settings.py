@@ -14,9 +14,10 @@ ALLOWED_HOSTS = ['*']
 
 # CSRF trusted origins for API Gateway and ALB
 CSRF_TRUSTED_ORIGINS = [
-    'https://hpb3jlspvg.execute-api.ap-south-1.amazonaws.com',
-    'http://dev-django-public-alb-993669740.ap-south-1.elb.amazonaws.com',
+    'https://oks7cg5x75.execute-api.ap-south-1.amazonaws.com',
+    'https://dev-django-public-alb-1010986706.ap-south-1.elb.amazonaws.com',
 ]
+
 
 # Application definition
 INSTALLED_APPS = [
